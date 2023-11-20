@@ -5,11 +5,17 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useNavigate,
 } from "@remix-run/react";
+import { I18nProvider, RouterProvider, useLocale } from "react-aria";
+// import "./index.css";
 
 export default function App() {
+  const { locale, direction } = useLocale();
+  const navigate = useNavigate();
+
   return (
-    <html lang="en">
+    <html lang={locale} dir={direction}>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -17,7 +23,11 @@ export default function App() {
         <Links />
       </head>
       <body>
-        <Outlet />
+        <I18nProvider locale={locale}>
+          <RouterProvider navigate={navigate}>
+            <Outlet />
+          </RouterProvider>
+        </I18nProvider>
         <ScrollRestoration />
         <LiveReload />
         <Scripts />
