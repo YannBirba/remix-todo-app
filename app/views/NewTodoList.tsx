@@ -1,5 +1,4 @@
 import {
-  json,
   redirect,
   type ActionFunctionArgs,
   type LoaderFunctionArgs,
@@ -13,9 +12,12 @@ import { Form } from "~/components/Form";
 import { TextField } from "~/components/TextField";
 import { emitter } from "~/helpers/emitter.server";
 import { generateMeta } from "~/helpers/meta";
+import { authenticator } from "~/services/auth.server";
 
-export const loader = async ({}: LoaderFunctionArgs) => {
-  return json({} as const);
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  return await authenticator.isAuthenticated(request, {
+    failureRedirect: "/login",
+  });
 };
 
 export const meta: MetaFunction<typeof loader> = ({}) => {
@@ -26,21 +28,25 @@ export const meta: MetaFunction<typeof loader> = ({}) => {
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
+  const user = await authenticator.isAuthenticated(request, {
+    failureRedirect: "/login",
+  });
+
+  if (!user) return redirect("/login");
+
   const data = await request.formData();
   const titleData = data.get("title");
-  const userIdData = data.get("userId");
 
-  if (!titleData || !userIdData) throw new Error("Missing data");
+  if (!titleData) throw new Error("Missing data");
 
   const title = titleData.toString();
-  const userId = parseInt(userIdData.toString());
 
-  if (!title || !userId) throw new Error("Incorrect data");
+  if (!title) throw new Error("Incorrect data");
 
   try {
     const { lastInsertRowid } = await db
       .insert(todoLists)
-      .values({ title, userId });
+      .values({ title, userId: user.id });
     emitter.emit("new-todo");
     return redirect(`/${lastInsertRowid}`);
   } catch (error) {
@@ -69,7 +75,6 @@ const NewTodoList = () => {
           autoComplete="todolist-title"
           isRequired
         />
-        <input type="hidden" name="userId" value="1" />
         <Button type="submit">Ajouter</Button>
       </Form>
     </>

@@ -8,7 +8,7 @@ import {
   useNavigate,
 } from "@remix-run/react";
 import { I18nProvider, RouterProvider, useLocale } from "react-aria";
-// import "./index.css";
+import "./index.css";
 
 export default function App() {
   const { locale, direction } = useLocale();

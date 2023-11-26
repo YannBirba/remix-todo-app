@@ -9,7 +9,7 @@ import { db } from "db";
 import { todoLists, todos } from "db/schema";
 import { deferIf } from "defer-if";
 import { eq } from "drizzle-orm";
-import { Suspense, useEffect, useLayoutEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { Button } from "react-aria-components";
 import { css } from "styled-system/css";
 import { Form } from "~/components/Form";
@@ -20,24 +20,33 @@ import { isMobileUserAgent } from "~/helpers/isMobileUserAgent";
 import { generateMeta } from "~/helpers/meta";
 import { useLiveLoader } from "~/helpers/useLiveLoader";
 import { getTodolist } from "~/loaders/getTodolist";
+import { authenticator } from "~/services/auth.server";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+  const user = await authenticator.isAuthenticated(request, {
+    failureRedirect: "/login",
+  });
+
+  if (!user) return redirect("/login");
+
   if (!params.id) return redirect("/404");
   const id = parseInt(params.id) ?? redirect("/404");
   const data = {
-    todoList: getTodolist(id),
+    todoList: getTodolist(user.id, id),
   };
   return deferIf(data, isMobileUserAgent(request));
 };
 
-export const meta: MetaFunction<typeof loader> = ({ params }) => {
+export const meta: MetaFunction<typeof loader> = () => {
   return generateMeta({
-    description: `Todolist ${params.id}`,
+    description: `Todolist`,
     title: "TODO",
   });
 };
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
+  await authenticator.isAuthenticated(request, { failureRedirect: "/login" });
+
   const data = await request.formData();
   const action = data.get("action");
 
@@ -86,7 +95,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
     const id = parseInt(idData.toString());
     const name = nameData.toString();
-    const completed = completedData?.toString() === "on" ?? false;
+    const completed = completedData?.toString() === "on";
 
     if (!id) return redirect("/404");
 
@@ -145,7 +154,7 @@ const TodoList = () => {
   }, [todoList]);
 
   return (
-    <Suspense fallback="Loading...">
+    <Suspense fallback="Loading ...">
       <Await resolve={todoList}>
         {(value) => (
           <>
