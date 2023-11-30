@@ -6,13 +6,17 @@ import { useDebounceFetcher } from "~/helpers/useDebounceFetcher";
 import { Form } from "./Form";
 import { Icon } from "./Icon";
 
-export type TodoProps = {} & TodoType;
+export type TodoProps = {} & Pick<TodoType, "completed" | "id" | "name">;
 
 export const Todo = ({ id, ...todo }: TodoProps) => {
   const fetcher = useDebounceFetcher();
 
-  const completed = fetcher.formData ? fetcher.formData.get(`todo-completed-${id}`) === "on" : todo.completed;
-  const name = fetcher.formData ? fetcher.formData.get(`todo-name-${id}`)?.toString() ?? todo.name : todo.name;
+  const completed = fetcher.formData
+    ? fetcher.formData.get(`todo-completed-${id}`) === "on"
+    : todo.completed;
+  const name = fetcher.formData
+    ? fetcher.formData.get(`todo-name-${id}`)?.toString() ?? todo.name
+    : todo.name;
 
   return (
     <div

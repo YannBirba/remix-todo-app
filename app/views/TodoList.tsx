@@ -1,3 +1,4 @@
+import { cachified } from "@epic-web/cachified";
 import {
   redirect,
   type ActionFunctionArgs,
@@ -15,6 +16,7 @@ import { css } from "styled-system/css";
 import { Form } from "~/components/Form";
 import { Icon } from "~/components/Icon";
 import { Todo } from "~/components/Todo";
+import { cache } from "~/helpers/cache.server";
 import { emitter } from "~/helpers/emitter.server";
 import { isMobileUserAgent } from "~/helpers/isMobileUserAgent";
 import { generateMeta } from "~/helpers/meta";
@@ -31,10 +33,15 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
   if (!params.id) return redirect("/404");
   const id = parseInt(params.id) ?? redirect("/404");
-  const data = {
-    todoList: getTodolist(user.id, id),
-  };
-  return deferIf(data, isMobileUserAgent(request));
+
+  const todoList = cachified({
+    cache,
+    key: `todolists-id-${id}`,
+    ttl: 60,
+    getFreshValue: () => getTodolist(user.id, id),
+  });
+
+  return deferIf({ todoList }, isMobileUserAgent(request));
 };
 
 export const meta: MetaFunction<typeof loader> = () => {

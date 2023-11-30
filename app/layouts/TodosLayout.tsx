@@ -1,3 +1,4 @@
+import cachified from "@epic-web/cachified";
 import {
   ActionFunctionArgs,
   LoaderFunctionArgs,
@@ -11,6 +12,7 @@ import { Button, Link } from "react-aria-components";
 import { css } from "styled-system/css";
 import { Form } from "~/components/Form";
 import { Icon } from "~/components/Icon";
+import { cache } from "~/helpers/cache.server";
 import { isMobileUserAgent } from "~/helpers/isMobileUserAgent";
 import { generateMeta } from "~/helpers/meta";
 import { useRouteLiveLoader } from "~/helpers/useLiveLoader";
@@ -24,10 +26,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   if (!user) return redirect("/login");
 
-  const data = {
-    todoLists: getTodolists(user.id),
-  };
-  return await deferIf(data, isMobileUserAgent(request));
+  const todoLists = cachified({
+    cache,
+    key: `todolists-user-${user.id}`,
+    ttl: 60,
+    getFreshValue: () => getTodolists(user.id),
+  });
+
+  return deferIf({ todoLists }, isMobileUserAgent(request));
 };
 
 export const meta: MetaFunction<typeof loader> = ({}) => {

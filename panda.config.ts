@@ -23,13 +23,18 @@ export default defineConfig({
   globalCss: {
     "*, *::before, *::after": {
       boxSizing: "border-box",
+      touchAction: "manipulation",
+      WebkitTapHighlightColor: "transparent",
     },
 
     html: {
       scrollBehavior: "smooth",
       fontSize: "100%",
       height: "100%",
-      WebkitTapHighlightColor: "transparent",
+      paddingTop: "env(safe-area-inset-top)",
+      paddingBottom: "env(safe-area-inset-bottom)",
+      paddingRight: "env(safe-area-inset-right)",
+      paddingLeft: "env(safe-area-inset-left)",
     },
 
     body: {
@@ -53,7 +58,6 @@ export default defineConfig({
 
     button: {
       cursor: "pointer",
-      touchAction: "manipulation",
     },
 
     "h1, h2, h3, h4, h5, h6": {

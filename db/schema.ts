@@ -65,28 +65,34 @@ export const todos = sqliteTable("todos", {
 // relationships
 
 export const usersRelations = relations(users, ({ many }) => ({
-  todoLists: many(todoLists),
-  usersTodoLists: many(usersTodoLists),
+  owenedTodoLists: many(todoLists, { relationName: "owenedTodoLists" }),
+  sharedTodoLists: many(usersTodoLists, {
+    relationName: "sharedTodoLists",
+  }),
 }));
 
 export const todoListsRelations = relations(todoLists, ({ many, one }) => ({
-  // users: many(users),
   todos: many(todos),
-  user: one(users, {
+  owner: one(users, {
     fields: [todoLists.userId],
     references: [users.id],
+    relationName: "owenedTodoLists",
   }),
-  users: many(usersTodoLists),
+  users: many(usersTodoLists, {
+    relationName: "users",
+  }),
 }));
 
 export const usersTodoListsRelations = relations(usersTodoLists, ({ one }) => ({
   user: one(users, {
     fields: [usersTodoLists.userId],
     references: [users.id],
+    relationName: "users",
   }),
   todoList: one(todoLists, {
     fields: [usersTodoLists.todoListId],
     references: [todoLists.id],
+    relationName: "sharedTodoLists",
   }),
 }));
 

@@ -1,7 +1,4 @@
-import {
-  unstable_createViteServer as createViteServer,
-  unstable_loadViteServerBuild as loadViteServerBuild,
-} from "@remix-run/dev";
+import { unstable_viteServerBuildModuleId as viteServerBuildModuleId } from "@remix-run/dev";
 import { createRequestHandler } from "@remix-run/express";
 import { installGlobals } from "@remix-run/node";
 import express from "express";
@@ -9,7 +6,15 @@ import express from "express";
 installGlobals();
 
 let vite =
-  process.env.NODE_ENV === "production" ? undefined : await createViteServer();
+  process.env.NODE_ENV === "production"
+    ? undefined
+    : await import("vite").then(({ createServer }) =>
+        createServer({
+          server: {
+            middlewareMode: true,
+          },
+        })
+      );
 
 const app = express();
 
@@ -29,10 +34,12 @@ app.all(
   "*",
   createRequestHandler({
     build: vite
-      ? () => loadViteServerBuild(vite)
+      ? () => vite.ssrLoadModule(viteServerBuildModuleId)
       : await import("./build/index.js"),
   })
 );
 
 const port = 3000;
-app.listen(port, () => console.log(`⚡ Server running at http://localhost:${port}`));
+app.listen(port, () =>
+  console.log(`⚡ Server running at http://localhost:${port}`)
+);
