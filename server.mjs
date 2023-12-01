@@ -34,7 +34,8 @@ app.all(
   "*",
   createRequestHandler({
     build: vite
-      ? () => vite.ssrLoadModule(viteServerBuildModuleId)
+      ? () => vite?.ssrLoadModule(viteServerBuildModuleId)
+      // @ts-ignore
       : await import("./build/index.js"),
   })
 );
